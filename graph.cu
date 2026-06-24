@@ -73,7 +73,7 @@ void writeVectorToFile(const float *data, int N, const std::string& filename) {
 
     // Write each element to a new line
     for (int i = 0; i < N; i++) {
-        outFile << data[i];
+        outFile << data[i] << "\n";
     }
 
     // Close the file to free up system resources
