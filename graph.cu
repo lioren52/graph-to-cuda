@@ -21,20 +21,6 @@ std::string op2String(Oper op) {
     }
 }
 
-void generateAndSaveInput(Node* node) {
-    int size = 1;
-    std::mt19937 rng(42);
-    for (int d : node->shape) size *= d;
-
-    std::uniform_real_distribution<float> dist(-0.1f, 0.1f);
-    std::vector<float> cpuBuf(size);
-    for (float& f : cpuBuf) f = dist(rng);
-
-    std::string filename = node->name + ".bin";
-    std::ofstream file(filename, std::ios::binary);
-    file.write((char*)cpuBuf.data(), size * sizeof(float));
-}
-
 std::vector<float> readFloatsFromFile(std::string filename, size_t bytes_to_read) {
     std::vector<float> data;
 
@@ -103,6 +89,21 @@ public:
     std::vector<int> shape;
 };
 
+
+void generateAndSaveInput(Node* node) {
+    int size = 1;
+    std::mt19937 rng(42);
+    for (int d : node->shape) size *= d;
+
+    std::uniform_real_distribution<float> dist(-0.1f, 0.1f);
+    std::vector<float> cpuBuf(size);
+    for (float& f : cpuBuf) f = dist(rng);
+
+    std::string filename = node->name + ".bin";
+    std::ofstream file(filename, std::ios::binary);
+    file.write((char*)cpuBuf.data(), size * sizeof(float));
+}
+
 class Graph {
     std::vector<std::unique_ptr<Node>> nodes;
     Node* outputNode = nullptr;
@@ -113,13 +114,13 @@ public:
         float* address;
         size_t bytesNode = node->shape[0] * node->shape[1];
 
-        cudaMalloc((void**)address, bytesNode);
+        cudaMalloc((void**)&address, bytesNode * sizeof(float));
 
         return address;
     }
 
-    std::unordered_map<int, float*> nodeMemMap(std::vector<std::unique_ptr<Node>> nodes) {
-        std::unordered_map<int float*> mp;
+    std::unordered_map<int, float*> nodeMem() {
+        std::unordered_map<int, float*> mp;
 
 
         for (std::unique_ptr<Node> node : nodes) {
@@ -139,15 +140,15 @@ public:
     }
 
     void execute() {
-        std::unordered_map<int, float*> nodeMemMap(nodes);
+        std::unordered_map<int, float*> nodeMemMap = nodeMem();
         int inputTill = 0;
 
         for (int i = 0; i < sorted.size(); i++) {
             if (sorted[i]->operation == Oper::INPUT) {
                 size_t byteSize = sorted[i]->shape[0] * sorted[i]->shape[1] * sizeof(float);
-                std::vector<float> cont = readFloatsFromFile(sorted[i]->name, bytesSize);
+                std::vector<float> cont = readFloatsFromFile(sorted[i]->name, byteSize);
 
-                cudaMemcpy(nodeMemMap[sorted[i]->id], cont.data(), bytesSize, cudaMemcpyHostToDevice);
+                cudaMemcpy(nodeMemMap[sorted[i]->id], cont.data(), byteSize, cudaMemcpyHostToDevice);
             } else {
                 inputTill = i;
                 break;
@@ -156,6 +157,9 @@ public:
 
         for (int i = inputTill; i < sorted.size(); i++) {
             if (sorted[i]->operation == Oper::MATMUL) {
+                int row_A = sorted[i]->inputs[0]->shape[0];
+                int N     = sorted[i]->inputs[0]->shape[1];
+                int col_B = sorted[i]->inputs[1]->shape[1];
                 dim3 threadPerBlock(16, 16);
                 dim3 blocks((col_B + threadPerBlock.x - 1) / threadPerBlock.x, (row_A + threadPerBlock.y - 1) / threadPerBlock.y);
 
@@ -163,26 +167,26 @@ public:
             } else if (sorted[i]->operation == Oper::ADD) {
                 dim3 threadsPerBlock(16, 16);
                 dim3 blocksPerGrid(
-                    (width + threadsPerBlock.x - 1) / threadsPerBlock.x,
-                    (height + threadsPerBlock.y - 1) / threadsPerBlock.y
+                    (nodeMemMap[sorted[i]->inputs[0]->shape[1]] + threadsPerBlock.x - 1) / threadsPerBlock.x,
+                    (nodeMemMap[sorted[i]->inputs[0]->shape[0]] + threadsPerBlock.y - 1) / threadsPerBlock.y
                 );
 
                 matrixAdd<<<blocksPerGrid, threadsPerBlock>>>(nodeMemMap[sorted[i]->inputs[0]->id], nodeMemMap[sorted[i]->inputs[1]->id], nodeMemMap[sorted[i]->id], nodeMemMap[sorted[i]->inputs[0]->shape[0]], nodeMemMap[sorted[i]->inputs[0]->shape[1]]);
             } else if (sorted[i]->operation == Oper::ReLU) {
                 dim3 threadsPerBlock(16, 16);
                 dim3 blocksPerGrid(
-                    (width + threadsPerBlock.x - 1) / threadsPerBlock.x,
-                    (height + threadsPerBlock.y - 1) / threadsPerBlock.y
+                    (nodeMemMap[sorted[i]->inputs[0]->shape[1]] + threadsPerBlock.x - 1) / threadsPerBlock.x,
+                    (nodeMemMap[sorted[i]->inputs[0]->shape[0]] + threadsPerBlock.y - 1) / threadsPerBlock.y
                 );
 
                 matrixReLUInPlace<<<blocksPerGrid, threadsPerBlock>>>(nodeMemMap[sorted[i]->inputs[0]->id], nodeMemMap[sorted[i]->id], nodeMemMap[sorted[i]->inputs[0]->shape[0]], nodeMemMap[sorted[i]->inputs[0]->shape[1]]);
             }
-
-            Node* node = getOutput();
-            std::vector<float> output(node->shape[0] * node->shape[1]);
-            cudaMemcpy(output.data(), nodeMemMap[node->id], node->shape[0] * node->shape[1] * sizeof(float), cudaMemcpyDeviceToHost);
-            writeVectorToFile(output.data(), output.size(), node->name);
         }
+
+        Node* node = getOutput();
+        std::vector<float> output(node->shape[0] * node->shape[1]);
+        cudaMemcpy(output.data(), nodeMemMap[node->id], node->shape[0] * node->shape[1] * sizeof(float), cudaMemcpyDeviceToHost);
+        writeVectorToFile(output.data(), output.size(), node->name);
     }
 
 
@@ -391,6 +395,6 @@ int main() {
     graph.execute();
 
 
-    
+
     return 0;
 }

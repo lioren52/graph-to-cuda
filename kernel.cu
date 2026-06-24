@@ -14,7 +14,7 @@ __global__ void matrixMul(float* A, float* B, float* C, int row_A, int N, int co
     }
 }
 
-__global__ void matrixAdd(float *A, float *B, float *C, int height, int width,) {
+__global__ void matrixAdd(float *A, float *B, float *C, int height, int width) {
     // Calculate the 2D global coordinates (row and column)
     int col = blockIdx.x * blockDim.x + threadIdx.x;
     int row = blockIdx.y * blockDim.y + threadIdx.y;
