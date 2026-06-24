@@ -402,7 +402,9 @@ int main() {
         std::cout << std::endl;
     }
 
+    std::cout << "Generator" << std::endl;
     graph.generator();
+    std::cout << "Execution" << std::endl;
     graph.execute();
 
 
