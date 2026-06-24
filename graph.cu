@@ -150,6 +150,7 @@ public:
                 std::vector<float> cont = readFloatsFromFile(sorted[i]->name+".bin", byteSize);
 
                 cudaMemcpy(nodeMemMap[sorted[i]->id], cont.data(), byteSize, cudaMemcpyHostToDevice);
+                std::cout << "Inputing from " << sorted[i]->name << std::endl;
             } else {
                 inputTill = i;
                 break;
@@ -192,10 +193,14 @@ public:
                     height, width
                 );
             }
+
+            std::cout << "At " << sorted[i]->name << std::endl;
         }
 
         Node* node = getOutput();
         std::vector<float> output(node->shape[0] * node->shape[1]);
+        std::cout << std::endl;
+        std::cout << "Final Node: " << node->name << std::endl;
         cudaMemcpy(output.data(), nodeMemMap[node->id], node->shape[0] * node->shape[1] * sizeof(float), cudaMemcpyDeviceToHost);
         writeVectorToFile(output.data(), output.size(), node->name);
     }
