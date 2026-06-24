@@ -123,7 +123,7 @@ public:
         std::unordered_map<int, float*> mp;
 
 
-        for (std::unique_ptr<Node> node : nodes) {
+        for (const std::unique_ptr<Node>& node : nodes) {
             Node* raw = node.get();
             mp[raw->id] = bufferAlloc(raw);
         }
@@ -161,25 +161,35 @@ public:
                 int N     = sorted[i]->inputs[0]->shape[1];
                 int col_B = sorted[i]->inputs[1]->shape[1];
                 dim3 threadPerBlock(16, 16);
-                dim3 blocks((col_B + threadPerBlock.x - 1) / threadPerBlock.x, (row_A + threadPerBlock.y - 1) / threadPerBlock.y);
-
-                matrixMul<<<blocks, threadPerBlock>>>(nodeMemMap[sorted[i]->inputs[0]->id], nodeMemMap[sorted[i]->inputs[1]->id], nodeMemMap[sorted[i]->id], nodeMemMap[sorted[i]->inputs[0]->shape[0]], nodeMemMap[sorted[i]->inputs[0]->shape[1]], nodeMemMap[sorted[i]->inputs[1]->shape[1]]);
+                dim3 blocks((col_B + 15) / 16, (row_A + 15) / 16);
+                matrixMul<<<blocks, threadPerBlock>>>(
+                    nodeMemMap[sorted[i]->inputs[0]->id],
+                    nodeMemMap[sorted[i]->inputs[1]->id],
+                    nodeMemMap[sorted[i]->id],
+                    row_A, N, col_B
+                );
             } else if (sorted[i]->operation == Oper::ADD) {
+                int height = sorted[i]->shape[0];
+                int width  = sorted[i]->shape[1];
                 dim3 threadsPerBlock(16, 16);
-                dim3 blocksPerGrid(
-                    (nodeMemMap[sorted[i]->inputs[0]->shape[1]] + threadsPerBlock.x - 1) / threadsPerBlock.x,
-                    (nodeMemMap[sorted[i]->inputs[0]->shape[0]] + threadsPerBlock.y - 1) / threadsPerBlock.y
+                dim3 blocksPerGrid((width + 15) / 16, (height + 15) / 16);
+                matrixAdd<<<blocksPerGrid, threadsPerBlock>>>(
+                    nodeMemMap[sorted[i]->inputs[0]->id],
+                    nodeMemMap[sorted[i]->inputs[1]->id],
+                    nodeMemMap[sorted[i]->id],
+                    height, width
                 );
-
-                matrixAdd<<<blocksPerGrid, threadsPerBlock>>>(nodeMemMap[sorted[i]->inputs[0]->id], nodeMemMap[sorted[i]->inputs[1]->id], nodeMemMap[sorted[i]->id], nodeMemMap[sorted[i]->inputs[0]->shape[0]], nodeMemMap[sorted[i]->inputs[0]->shape[1]]);
             } else if (sorted[i]->operation == Oper::ReLU) {
+                int height = sorted[i]->shape[0];
+                int width  = sorted[i]->shape[1];
                 dim3 threadsPerBlock(16, 16);
-                dim3 blocksPerGrid(
-                    (nodeMemMap[sorted[i]->inputs[0]->shape[1]] + threadsPerBlock.x - 1) / threadsPerBlock.x,
-                    (nodeMemMap[sorted[i]->inputs[0]->shape[0]] + threadsPerBlock.y - 1) / threadsPerBlock.y
-                );
+                dim3 blocksPerGrid((width + 15) / 16, (height + 15) / 16);
 
-                matrixReLUInPlace<<<blocksPerGrid, threadsPerBlock>>>(nodeMemMap[sorted[i]->inputs[0]->id], nodeMemMap[sorted[i]->id], nodeMemMap[sorted[i]->inputs[0]->shape[0]], nodeMemMap[sorted[i]->inputs[0]->shape[1]]);
+                matrixReLU<<<blocksPerGrid, threadsPerBlock>>>(
+                    nodeMemMap[sorted[i]->inputs[0]->id],
+                    nodeMemMap[sorted[i]->id],
+                    height, width
+                );
             }
         }
 
