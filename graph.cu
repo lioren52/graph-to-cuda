@@ -147,7 +147,7 @@ public:
         for (int i = 0; i < sorted.size(); i++) {
             if (sorted[i]->operation == Oper::INPUT) {
                 size_t byteSize = sorted[i]->shape[0] * sorted[i]->shape[1] * sizeof(float);
-                std::vector<float> cont = readFloatsFromFile(sorted[i]->name, byteSize);
+                std::vector<float> cont = readFloatsFromFile(sorted[i]->name+".bin", byteSize);
 
                 cudaMemcpy(nodeMemMap[sorted[i]->id], cont.data(), byteSize, cudaMemcpyHostToDevice);
             } else {
