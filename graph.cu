@@ -6,6 +6,7 @@
 #include <fstream>
 #include <unordered_map>
 #include "kernel.cu"
+#include <random>
 
 enum class Oper {
     INPUT, MATMUL, ADD, ReLU
