@@ -3,6 +3,8 @@
 #include <vector>
 #include <unordered_map>
 #include <string>
+#include "node.h"
+#include "fileio.h"
 
 class Graph {
     std::vector<std::unique_ptr<Node>> nodes;

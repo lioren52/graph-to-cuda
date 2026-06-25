@@ -2,7 +2,6 @@
 
 #include <vector>
 
-
 enum class Oper {
     INPUT, MATMUL, ADD, ReLU
 };
