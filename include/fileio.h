@@ -3,8 +3,8 @@
 #include <vector>
 #include <unordered_map>
 #include <string>
-#include "graph.h"
-#include "node.h"
+#include <graph.h>
+#include <node.h>
 
 std::string op2String(Oper op);
 

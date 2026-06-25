@@ -4,8 +4,8 @@
 #include <unordered_map>
 #include <memory>
 #include <string>
-#include "node.h"
-#include "fileio.h"
+#include <node.h>
+#include <fileio.h>
 
 class Graph {
     std::vector<std::unique_ptr<Node>> nodes;

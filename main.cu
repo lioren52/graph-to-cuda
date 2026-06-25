@@ -1,8 +1,8 @@
 #include <iostream>
 #include <vector>
-#include "fileio.h"
-#include "graph.h"
-#include "node.h"
+#include <fileio.h>
+#include <graph.h>
+#include <node.h>
 
 int main() {
     Graph graph;
