@@ -15,13 +15,11 @@ __global__ void matrixMul(float* A, float* B, float* C, int row_A, int N, int co
 }
 
 __global__ void matrixAdd(float *A, float *B, float *C, int height, int width) {
-    // Calculate the 2D global coordinates (row and column)
     int col = blockIdx.x * blockDim.x + threadIdx.x;
     int row = blockIdx.y * blockDim.y + threadIdx.y;
 
-    // Boundary check for both dimensions
     if (col < width && row < height) {
-        // Flatten the 2D coordinates into a 1D memory index
+
         int index = row * width + col;
         
         C[index] = A[index] + B[index];
@@ -29,16 +27,12 @@ __global__ void matrixAdd(float *A, float *B, float *C, int height, int width) {
 }
 
 __global__ void matrixReLU(const float *A, float *C, int height, int width) {
-    // Calculate the 2D global coordinates
     int col = blockIdx.x * blockDim.x + threadIdx.x;
     int row = blockIdx.y * blockDim.y + threadIdx.y;
 
-    // Boundary check
     if (col < width && row < height) {
         int index = row * width + col;
         
-        // Apply ReLU: C = max(0, A)
-        // fmaxf is a hardware-optimized CUDA math function for floats
         C[index] = fmaxf(0.0f, A[index]); 
     }
 }
