@@ -40,13 +40,15 @@ __global__ void matrixReLU(const float *A, float *C, int height, int width) {
 void matMul(float* A, float* B, float* C, int row_A, int N, int col_B) {
     dim3 threadPerBlock(16, 16);
     dim3 blocks((col_B + 15) / 16, (row_A + 15) / 16);
+
     matrixMul<<<blocks, threadPerBlock>>>(A, B, C, row_A, N, col_B);
 }
 
 void matAdd(float *A, float *B, float *C, int height, int width) {
     dim3 threadsPerBlock(16, 16);
     dim3 blocksPerGrid((width + 15) / 16, (height + 15) / 16);
-    matrixAdd<<<blocksPerGrid, threadsPerBlock>>>(A, B, B, height, width);
+
+    matrixAdd<<<blocksPerGrid, threadsPerBlock>>>(A, B, C, height, width);
 }
 
 void matReLU(float *A, float *C, int height, int width) {
