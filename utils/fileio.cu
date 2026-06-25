@@ -4,6 +4,7 @@
 #include <string>
 #include <random>
 #include <memory>
+#include <iostream>
 #include "fileio.h"
 #include "graph.h"
 #include "node.h"
