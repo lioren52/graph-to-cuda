@@ -4,6 +4,9 @@
 #include <string>
 #include <random>
 #include <memory>
+#include "fileio.h"
+#include "graph.h"
+#include "node.h"
 
 std::string op2String(Oper op) {
     switch (op) {
