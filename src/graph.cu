@@ -9,6 +9,7 @@
 #include "fileio.h"
 #include "graph.h"
 #include "node.h"
+#include <kernel.h>
 
 
 float* Graph::bufferAlloc(Node* node) {
@@ -62,36 +63,20 @@ void Graph::execute() {
             int row_A = sorted[i]->inputs[0]->shape[0];
             int N     = sorted[i]->inputs[0]->shape[1];
             int col_B = sorted[i]->inputs[1]->shape[1];
-            dim3 threadPerBlock(16, 16);
-            dim3 blocks((col_B + 15) / 16, (row_A + 15) / 16);
-            matrixMul<<<blocks, threadPerBlock>>>(
-                nodeMemMap[sorted[i]->inputs[0]->id],
-                nodeMemMap[sorted[i]->inputs[1]->id],
-                nodeMemMap[sorted[i]->id],
-                row_A, N, col_B
-            );
+
+            matMul(nodeMemMap[sorted[i]->inputs[0]->id], nodeMemMap[sorted[i]->inputs[1]->id], nodeMemMap[sorted[i]->id], row_A, N, col_B);
+
         } else if (sorted[i]->operation == Oper::ADD) {
             int height = sorted[i]->shape[0];
             int width  = sorted[i]->shape[1];
-            dim3 threadsPerBlock(16, 16);
-            dim3 blocksPerGrid((width + 15) / 16, (height + 15) / 16);
-            matrixAdd<<<blocksPerGrid, threadsPerBlock>>>(
-                nodeMemMap[sorted[i]->inputs[0]->id],
-                nodeMemMap[sorted[i]->inputs[1]->id],
-                nodeMemMap[sorted[i]->id],
-                height, width
-            );
+            
+            matAdd(nodeMemMap[sorted[i]->inputs[0]->id], nodeMemMap[sorted[i]->inputs[1]->id], nodeMemMap[sorted[i]->id], height, width);
+            
         } else if (sorted[i]->operation == Oper::ReLU) {
             int height = sorted[i]->shape[0];
             int width  = sorted[i]->shape[1];
-            dim3 threadsPerBlock(16, 16);
-            dim3 blocksPerGrid((width + 15) / 16, (height + 15) / 16);
-
-            matrixReLU<<<blocksPerGrid, threadsPerBlock>>>(
-                nodeMemMap[sorted[i]->inputs[0]->id],
-                nodeMemMap[sorted[i]->id],
-                height, width
-            );
+            
+            matReLU(nodeMemMap[sorted[i]->inputs[0]->id], nodeMemMap[sorted[i]->id], height, width);
         }
 
         std::cout << "At " << sorted[i]->name << std::endl;
