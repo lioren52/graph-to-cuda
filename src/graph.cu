@@ -152,6 +152,7 @@ void Graph::fusionPass() {
                 skip = j;
             }
             i = skip;
+            fusion.push_back(fusionNodes);
         }
     }
 
