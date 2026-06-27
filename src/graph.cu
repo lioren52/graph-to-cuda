@@ -151,25 +151,19 @@ void Graph::fusionPass() {
                 for (Node* inp : sorted[j]->inputs) {
                     if (inp == prev) { isConnected = true; break; }
                 }
-                bool opFusable = (sorted[j]->operation == Oper::MATMUL ||
-                                sorted[j]->operation == Oper::ADD ||
-                                sorted[j]->operation == Oper::ReLU);
 
                 bool fusable = isConnected && 
                                 (sorted[j]->operation == Oper::MATMUL ||
                                 sorted[j]->operation == Oper::ADD ||
                                 sorted[j]->operation == Oper::ReLU) && 
                                 (outMap[sorted[j]].size() == 1 || j == sorted.size() - 1);
-                
-                if (opFusable) {
-                    fusionNodes.push_back(sorted[j]);
-                }
 
                 if (!fusable) {
                     skip = j;
                     break;
                 }
                 skip = j;
+                fusionNodes.push_back(sorted[j]);
             }
             i = skip;
             if (fusionNodes.size() > 1) fusion.push_back(fusionNodes);
