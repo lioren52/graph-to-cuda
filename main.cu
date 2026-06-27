@@ -64,10 +64,7 @@ int main() {
     }
 
 
-    std::cout << "Generating values" << std::endl;
-    graph.generator();
-    std::cout << "Execution" << std::endl;
-    graph.execute();
+    graph.fusionPass();
 
 
 
