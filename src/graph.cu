@@ -139,6 +139,18 @@ void Graph::fusionPass() {
             int skip = i;
             std::vector<Node*> fusionNodes;
             for (int j = i; j < sorted.size(); j++) {
+                if (j == i) {
+                    fusionNodes.push_back(sorted[j]);
+                    skip = j;
+                    continue;
+                }
+
+                // subsequent nodes — must be directly connected to previous node
+                Node* prev = fusionNodes.back();
+                bool isConnected = false;
+                for (Node* inp : sorted[j]->inputs) {
+                    if (inp == prev) { isConnected = true; break; }
+                }
                 bool opFusable = (sorted[j]->operation == Oper::MATMUL ||
                                 sorted[j]->operation == Oper::ADD ||
                                 sorted[j]->operation == Oper::ReLU);
