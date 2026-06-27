@@ -155,7 +155,8 @@ void Graph::fusionPass() {
                                 sorted[j]->operation == Oper::ADD ||
                                 sorted[j]->operation == Oper::ReLU);
 
-                bool fusable = (sorted[j]->operation == Oper::MATMUL ||
+                bool fusable = isConnected && 
+                                (sorted[j]->operation == Oper::MATMUL ||
                                 sorted[j]->operation == Oper::ADD ||
                                 sorted[j]->operation == Oper::ReLU) && 
                                 (outMap[sorted[j]].size() == 1 || j == sorted.size() - 1);
