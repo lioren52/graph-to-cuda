@@ -40,7 +40,7 @@ int main() {
 
     graph.setOutput(relu_out);
     std::vector<Node*> topoS = graph.topoSort();
-    std::cout << "----------------------Topological Sort----------------------" std::endl;
+    std::cout << "----------------------Topological Sort----------------------" << std::endl;
     for (Node* item : topoS) {
         graph.printNode(item);
         std::cout << std::endl;
