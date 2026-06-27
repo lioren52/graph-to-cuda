@@ -139,20 +139,27 @@ void Graph::fusionPass() {
             int skip = i;
             std::vector<Node*> fusionNodes;
             for (int j = i; j < sorted.size(); j++) {
+                bool opFusable = (sorted[j]->operation == Oper::MATMUL ||
+                                sorted[j]->operation == Oper::ADD ||
+                                sorted[j]->operation == Oper::ReLU);
+
                 bool fusable = (sorted[j]->operation == Oper::MATMUL ||
                                 sorted[j]->operation == Oper::ADD ||
-                                sorted[j]->operation == Oper::ReLU) &&
-                            (outMap[sorted[j]].size() == 1 || j == sorted.size() - 1);
+                                sorted[j]->operation == Oper::ReLU) && 
+                                (outMap[sorted[j]].size() == 1 || j == sorted.size() - 1);
+                
+                if (opFusable) {
+                    fusionNodes.push_back(sorted[j]);
+                }
 
                 if (!fusable) {
                     skip = j;
                     break;
                 }
-                fusionNodes.push_back(sorted[j]);
                 skip = j;
             }
             i = skip;
-            fusion.push_back(fusionNodes);
+            if (fusionNodes.size() > 1) fusion.push_back(fusionNodes);
         }
     }
 
