@@ -32,4 +32,10 @@ public:
     void printGraph();
 
     std::vector<Node*> topoSort();
+
+    void fuseNodes(std::vector<Node*> nodes2Fuse);
+
+    void fusionPass();
+
+    void printNode(Node* item);
 };

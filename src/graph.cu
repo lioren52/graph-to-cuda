@@ -260,7 +260,7 @@ void Graph::printGraph() {
     }
 }
 
-void printNode(Node* item) {
+void Graph::printNode(Node* item) {
     std::cout << "Node Name: " << item->name << "\n";
     std::cout << "ID: " << item->id << "\n";
     std::cout << "Operation: " << op2String(item->operation) << "\n";
