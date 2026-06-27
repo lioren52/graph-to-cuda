@@ -40,28 +40,6 @@ int main() {
 
     graph.setOutput(relu_out);
     std::vector<Node*> topoS = graph.topoSort();
-    std::cout << "------------Topological Sort------------" << std::endl;
-    std::vector<Node*> topo = graph.topoSort();
-    for (Node* item : topo) {
-        std::cout << "Node Name: " << item->name << "\n";
-        std::cout << "ID: " << item->id << "\n";
-        std::cout << "Operation: " << op2String(item->operation) << "\n";
-        std::cout << "Shape: (";
-        for (int i = 0; i < item->shape.size(); i++) {
-            std::cout << item->shape[i];
-            if (i < item->shape.size() - 1) std::cout << ", ";
-        }
-        std::cout << ")\n";
-        if (!item->inputs.empty()) {
-            std::cout << "Input Nodes: ";
-            for (Node* node : item->inputs) {
-                std::cout << node->name << " ";
-            }
-            std::cout << "\n";
-        }
-        std::cout << "\n";
-        std::cout << std::endl;
-    }
 
 
     graph.fusionPass();
