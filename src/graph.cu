@@ -160,6 +160,7 @@ void Graph::fusionPass() {
         std::cout << "----------List----------" << std::endl;
         for (Node* item : toFuse) {
             printNode(item);
+            std::cout << std::endl;
         }
 
         std::cout << std::endl;
