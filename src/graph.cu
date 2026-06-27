@@ -90,6 +90,81 @@ void Graph::execute() {
     writeVectorToFile(output.data(), output.size(), node->name);
 }
 
+void Graph::fuseNodes(std::vector<Node*> nodes2Fuse) {
+    std::vector<Node*> inputting = nodes2Fuse[0]->inputs;
+    std::string identifier = "";
+    for (Node* item : nodes2Fuse) {
+        if (item->operation == Oper::MATMUL) identifier += "M";
+        else if (item->operation == Oper::ADD) identifier += "A";
+        else if (item->operation == Oper::ReLU) identifier += "R";
+    }
+
+    Node* fusedNode = nullptr;
+
+    if (identifier == "MA") fusedNode = addNode("Fused_MA", Oper::FUSED_MA, inputting);
+    else if (identifier == "MR") fusedNode = addNode("Fused_MR", Oper::FUSED_MR, inputting);
+    else if (identifier == "AR") fusedNode = addNode("Fused_AR", Oper::FUSED_AR, inputting);
+    else if (identifier == "MAR") fusedNode = addNode("Fused_MAR", Oper::FUSED_MAR, inputting);
+
+    if (!fusedNode) {
+        std::cout << "Error: unknown fusion pattern: " << identifier << "\n";
+        return;
+    }
+
+    for (Node* item : outMap[nodes2Fuse[nodes2Fuse.size()-1]]) {
+        auto it = std::find(item->inputs.begin(), item->inputs.end(), nodes2Fuse.back());
+        if (it != item->inputs.end()) *it = fusedNode;
+    }
+}
+
+void Graph::fusionPass() {
+    outMap.clear();
+    std::vector<std::vector<Node*>> fusion;
+
+    for (int i = 0; i < sorted.size(); i++) {
+        if (!sorted[i]->inputs.empty()) {
+            for (Node* item : sorted[i]->inputs) {
+                if (outMap.find(item) != outMap.end()) {
+                    outMap[item].push_back(sorted[i]);
+                } else {
+                    outMap[item] = {sorted[i]};
+                }
+            }
+        }
+    }
+
+    for (int i = 0; i < sorted.size(); i++) {
+        if ((sorted[i]->operation == Oper::MATMUL || sorted[i]->operation == Oper::ADD) && outMap[sorted[i]].size() == 1) {
+            int skip = i;
+            std::vector<Node*> fusionNodes;
+            for (int j = i; j < sorted.size(); j++) {
+                bool fusable = (sorted[j]->operation == Oper::MATMUL ||
+                                sorted[j]->operation == Oper::ADD ||
+                                sorted[j]->operation == Oper::ReLU) &&
+                            (outMap[sorted[j]].size() == 1 || j == sorted.size() - 1);
+
+                if (!fusable) {
+                    skip = j;
+                    break;
+                }
+                fusionNodes.push_back(sorted[j]);
+                skip = j;
+            }
+            i = skip;
+        }
+    }
+
+    for (std::vector<Node*> toFuse : fusion) {
+        std::cout << "----------List----------" << std::endl;
+        for (Node* item : toFuse) {
+            printNode(item);
+        }
+
+        std::cout << std::endl;
+        std::cout << std::endl;
+    }
+}
+
 
 void Graph::setOutput(Node* node) {
     outputNode = node;
@@ -182,6 +257,25 @@ void Graph::printGraph() {
         std::cout << "\n";
         std::cout << std::endl;
         std::cout << std::endl;
+    }
+}
+
+void printNode(Node* item) {
+    std::cout << "Node Name: " << item->name << "\n";
+    std::cout << "ID: " << item->id << "\n";
+    std::cout << "Operation: " << op2String(item->operation) << "\n";
+    std::cout << "Shape: (";
+    for (int i = 0; i < item->shape.size(); i++) {
+        std::cout << item->shape[i];
+        if (i < item->shape.size() - 1) std::cout << ", ";
+    }
+    std::cout << ")\n";
+    if (!item->inputs.empty()) {
+        std::cout << "Input Nodes: ";
+        for (Node* node : item->inputs) {
+            std::cout << node->name << " ";
+        }
+        std::cout << "\n";
     }
 }
 

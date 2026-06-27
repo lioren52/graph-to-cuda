@@ -11,6 +11,7 @@ class Graph {
     std::vector<std::unique_ptr<Node>> nodes;
     Node* outputNode;
     std::vector<Node*> sorted;
+    std::unordered_map<Node*, std::vector<Node*>> outMap;
 public: 
     float* bufferAlloc(Node* node);
 

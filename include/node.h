@@ -3,7 +3,7 @@
 #include <vector>
 
 enum class Oper {
-    INPUT, MATMUL, ADD, ReLU
+    INPUT, MATMUL, ADD, ReLU, FUSED_MR, FUSED_AR, FUSED_MAR, FUSED_MA
 };
 
 
