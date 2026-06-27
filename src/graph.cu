@@ -4,6 +4,7 @@
 #include <string>
 #include <queue>
 #include <fstream>
+#include <algorithm>
 #include <unordered_map>
 #include <random>
 #include <fileio.h>
