@@ -120,7 +120,7 @@ void Graph::fuseNodes(std::vector<Node*> nodes2Fuse) {
     }
 }
 
-std::vector<Node*> Graph::fuseDFS(Node* node, std::vector<int>& visited, map<std::pair<Node*, Node*>, int> edgeID) {
+std::vector<Node*> Graph::fuseDFS(Node* node, std::vector<int>& visited, std::map<std::pair<Node*, Node*>, int> edgeID) {
     //base case
     int count = 0;
     for (Node* item : node->inputs) {
