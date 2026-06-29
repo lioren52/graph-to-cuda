@@ -81,3 +81,14 @@ void generateAndSaveInput(Node* node) {
     std::ofstream file(filename, std::ios::binary);
     file.write((char*)cpuBuf.data(), size * sizeof(float));
 }
+
+int getRandomInt(int min, int max) {
+    // 'static' means these are created once and remembered across function calls
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    
+    // The distribution is cheap to create, so it can be made every time
+    std::uniform_int_distribution<> distrib(min, max);
+    
+    return distrib(gen);
+}

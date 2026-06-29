@@ -13,3 +13,5 @@ std::vector<float> readFloatsFromFile(std::string filename, size_t bytes_to_read
 void writeVectorToFile(const float *data, int N, const std::string& filename);
 
 void generateAndSaveInput(Node* node);
+
+int getRandomInt(int min, int max);

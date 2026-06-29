@@ -118,6 +118,35 @@ void Graph::fuseNodes(std::vector<Node*> nodes2Fuse) {
     }
 }
 
+std::vector<Node*> Graph::fuseDFS(Node* node, std::vector<int>& visited, std::unordered_map<std::pair<Node*, Node*>, int> edgeID) {
+    //base case
+    int count = 0;
+    for (Node* item : node->inputs) {
+        if (item->operation != Oper::INPUT) {
+            count++;
+        }
+    }
+
+    if (count > 1) {
+        return {};
+    }
+
+    if (outMap[node].size() > 1 || outMap[node].size() == 0) {
+        return {node};
+    }
+
+    visited[node->id] = 1;
+    std::vector<Node*> ans;
+    
+    if (!visited[outMap[node][0]->id]) ans = fuseDFS(outMap[node][0]);
+
+    if ((edgeID[{node->input[0], node}] == edgeID[{node, outMap[node][0]}] || outMap.find(node->input[0]) == outMap.end())) {
+        ans.push_back(node);
+    }
+
+    return ans;
+} 
+
 void Graph::fusionPass() {
     outMap.clear();
     std::vector<std::vector<Node*>> fusion;
@@ -133,41 +162,65 @@ void Graph::fusionPass() {
             }
         }
     }
+    std::queue<std::pair<Node*, int>> que; 
+    std::vector<int> visited(stored.size(), 0);
+    std::unordered_map<std::pair<Node*, Node*>, int> edgeID;
+    std::vector<int> mergerMap(stored.size(), 0);
 
-    for (int i = 0; i < sorted.size(); i++) {
-        if ((sorted[i]->operation == Oper::MATMUL || sorted[i]->operation == Oper::ADD) && outMap[sorted[i]].size() == 1) {
-            int skip = i;
-            std::vector<Node*> fusionNodes;
-            for (int j = i; j < sorted.size(); j++) {
-                if (j == i) {
-                    fusionNodes.push_back(sorted[j]);
-                    skip = j;
-                    continue;
+    for (Node* item : sorted) {
+        if (item->operation != Oper::INPUT && !visited[item->id]) {
+            que.push({item, getRandomInt(1, 500)});
+            visited[item->id] = 1;
+
+            while (!que.empty()) {
+                std::pair<Node*, int> current = que.front();
+                que.pop();
+                
+                if (!visited[current.first->id]) {
+                    if (!mergerMap[current.first->id]) {
+                        bool newBranchFlag = false;
+                        int count = 0;
+                        for (Node* in : current.first->inputs) {
+                            if (in->operation != Oper::INPUT && count <= 1) {
+                                count++;
+                                newBranchFlag = true;
+                                break;
+                            }
+                        }
+
+                        if (newBranchFlag) {
+                            que.push({current->first, getRandomInt(1, 500)});
+                            mergerMap[current.first->id] = 1;
+                            continue;
+                        }
+                    }
+
+
+                    if (outMap[current.first].size() > 1) {
+                        for (Node* out : outMap[current.first]) {
+                            int ran = getRandomInt(1, 500);
+                            visited[out->id] = 1;
+                            que.push({out, ran});
+                            edgeID[{current.fist, out}] = ran;
+                        }
+                    } else if (outMap[current.first].size() == 0) {
+                        continue;
+                    } else {
+                        que.push({outMap[current.first][0], current.second});
+                        edgeID[{current.fist, outMap[current.first][0]}] = current.second;
+                    }
                 }
-
-                // subsequent nodes — must be directly connected to previous node
-                Node* prev = fusionNodes.back();
-                bool isConnected = false;
-                for (Node* inp : sorted[j]->inputs) {
-                    if (inp == prev) { isConnected = true; break; }
-                }
-
-                bool fusable = isConnected && 
-                                (sorted[j]->operation == Oper::MATMUL ||
-                                sorted[j]->operation == Oper::ADD ||
-                                sorted[j]->operation == Oper::ReLU) && 
-                                (outMap[sorted[j]].size() == 1 || j == sorted.size() - 1);
-
-                if (!fusable) {
-                    skip = j;
-                    break;
-                }
-                skip = j;
-                fusionNodes.push_back(sorted[j]);
             }
-            i = skip;
-            if (fusionNodes.size() > 1) fusion.push_back(fusionNodes);
         }
+    }
+    
+    std::vector<int> visited1(stored.size(), 0);
+    for (Node* item : sorted) {
+        if (item->operation == Oper::INPUT) continue;
+
+        std::vector<Node*> toFuse = fuseDFS(item, visited1, edgeID);
+
+        if (toFuse.size() > 1) fusion.push_back(toFuse);
     }
 
     for (std::vector<Node*> toFuse : fusion) {
