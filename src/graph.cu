@@ -223,7 +223,7 @@ void Graph::fusionPass() {
         std::vector<Node*> toFuse;
 
         if (!visited[item->id]) {
-            toFuse = fuseDFS(item, visited1, edgeID);bug fixes
+            toFuse = fuseDFS(item, visited1, edgeID);
         }
 
         if (toFuse.size() > 1) fusion.push_back(toFuse);
