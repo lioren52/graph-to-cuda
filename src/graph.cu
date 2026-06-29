@@ -139,7 +139,7 @@ std::vector<Node*> Graph::fuseDFS(Node* node, std::vector<int>& visited, std::un
     visited[node->id] = 1;
     std::vector<Node*> ans;
     
-    if (!visited[outMap[node][0]->id]) ans = fuseDFS(outMap[node][0]);
+    if (!visited[outMap[node][0]->id]) ans = fuseDFS(outMap[node][0], visited, edgeID);
 
     if ((edgeID[{node->inputs[0], node}] == edgeID[{node, outMap[node][0]}] || outMap.find(node->inputs[0]) == outMap.end())) {
         ans.push_back(node);
@@ -166,7 +166,7 @@ void Graph::fusionPass() {
     std::queue<std::pair<Node*, int>> que; 
     std::vector<int> visited(sorted.size(), 0);
     std::unordered_map<std::pair<Node*, Node*>, int> edgeID;
-    std::vector<int> mergerMap(stored.size(), 0);
+    std::vector<int> mergerMap(sorted.size(), 0);
 
     for (Node* item : sorted) {
         if (item->operation != Oper::INPUT && !visited[item->id]) {
@@ -190,7 +190,7 @@ void Graph::fusionPass() {
                         }
 
                         if (newBranchFlag) {
-                            que.push({current->first, getRandomInt(1, 500)});
+                            que.push({current.first, getRandomInt(1, 500)});
                             mergerMap[current.first->id] = 1;
                             continue;
                         }
@@ -202,13 +202,13 @@ void Graph::fusionPass() {
                             int ran = getRandomInt(1, 500);
                             visited[out->id] = 1;
                             que.push({out, ran});
-                            edgeID[{current.fist, out}] = ran;
+                            edgeID[{current.first, out}] = ran;
                         }
                     } else if (outMap[current.first].size() == 0) {
                         continue;
                     } else {
                         que.push({outMap[current.first][0], current.second});
-                        edgeID[{current.fist, outMap[current.first][0]}] = current.second;
+                        edgeID[{current.first, outMap[current.first][0]}] = current.second;
                     }
                 }
             }
