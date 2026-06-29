@@ -120,7 +120,7 @@ void Graph::fuseNodes(std::vector<Node*> nodes2Fuse) {
     }
 }
 
-std::vector<Node*> Graph::fuseDFS(Node* node, std::vector<int>& visited, std::map<std::pair<Node*, Node*>, int> edgeID) {
+std::vector<Node*> Graph::fuseDFS(Node* node, std::vector<int>& visited, std::map<std::pair<Node*, Node*>, int>& edgeID) {
     //base case
     int count = 0;
     for (Node* item : node->inputs) {
@@ -220,7 +220,11 @@ void Graph::fusionPass() {
     for (Node* item : sorted) {
         if (item->operation == Oper::INPUT) continue;
 
-        std::vector<Node*> toFuse = fuseDFS(item, visited1, edgeID);
+        std::vector<Node*> toFuse;
+
+        if (!visited[item->id]) {
+            toFuse = fuseDFS(item, visited1, edgeID);bug fixes
+        }
 
         if (toFuse.size() > 1) fusion.push_back(toFuse);
     }
