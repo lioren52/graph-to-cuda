@@ -12,6 +12,7 @@
 #include <node.h>
 #include <kernel.h>
 #include <utility>
+#include <map>
 
 
 float* Graph::bufferAlloc(Node* node) {
@@ -165,7 +166,7 @@ void Graph::fusionPass() {
     }
     std::queue<std::pair<Node*, int>> que; 
     std::vector<int> visited(sorted.size(), 0);
-    std::unordered_map<std::pair<Node*, Node*>, int> edgeID;
+    std::map<std::pair<Node*, Node*>, int> edgeID;
     std::vector<int> mergerMap(sorted.size(), 0);
 
     for (Node* item : sorted) {
@@ -215,7 +216,7 @@ void Graph::fusionPass() {
         }
     }
     
-    std::vector<int> visited1(stored.size(), 0);
+    std::vector<int> visited1(sorted.size(), 0);
     for (Node* item : sorted) {
         if (item->operation == Oper::INPUT) continue;
 
