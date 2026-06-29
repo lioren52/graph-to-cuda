@@ -120,19 +120,24 @@ void Graph::fuseNodes(std::vector<Node*> nodes2Fuse) {
     }
 }
 
-std::vector<Node*> Graph::fuseDFS(Node* node, std::vector<int>& visited, std::map<std::pair<Node*, Node*>, int>& edgeID, std::vector<int>& mergerMap) {
-    //base case
-    if (mergerMap[node->id]) {
-        visited[node->id] = 1;
-        std::vector<Node*> ans;
-        
-        if (!visited[outMap[node][0]->id]) ans = fuseDFS(outMap[node][0], visited, edgeID, mergerMap);
+std::vector<Node*> Graph::fuseDFSMerger(Node* node, std::vector<int>& visited, std::map<std::pair<Node*, Node*>, int>& edgeID) {
+    if (outMap[node].size() > 1 || outMap[node].size() == 0) {
+        return {node};
+    }
+    
+    visited[node->id] = 1;
+    std::vector<Node*> ans;
+    
+    if (!visited[outMap[node][0]->id]) ans = fuseDFS(outMap[node][0], visited, edgeID);
 
+    if ((edgeID[{node->inputs[0], node}] == edgeID[{node, outMap[node][0]}] || outMap.find(node->inputs[0]) == outMap.end())) {
         ans.push_back(node);
-
-        return ans;
     }
 
+    return ans;
+} 
+
+std::vector<Node*> Graph::fuseDFS(Node* node, std::vector<int>& visited, std::map<std::pair<Node*, Node*>, int>& edgeID) {
     int count = 0;
     for (Node* item : node->inputs) {
         if (item->operation != Oper::INPUT) {
@@ -151,7 +156,7 @@ std::vector<Node*> Graph::fuseDFS(Node* node, std::vector<int>& visited, std::ma
     visited[node->id] = 1;
     std::vector<Node*> ans;
     
-    if (!visited[outMap[node][0]->id]) ans = fuseDFS(outMap[node][0], visited, edgeID,mergerMap);
+    if (!visited[outMap[node][0]->id]) ans = fuseDFS(outMap[node][0], visited, edgeID);
 
     if ((edgeID[{node->inputs[0], node}] == edgeID[{node, outMap[node][0]}] || outMap.find(node->inputs[0]) == outMap.end())) {
         ans.push_back(node);
@@ -228,14 +233,18 @@ void Graph::fusionPass() {
     }
     
     std::vector<int> visited1(sorted.size(), 0);
-    std::vector<int> mergerMap1(sorted.size(), 0);
     for (Node* item : sorted) {
         if (item->operation == Oper::INPUT) continue;
 
         std::vector<Node*> toFuse;
 
-        if (!visited1[item->id]) {
-            toFuse = fuseDFS(item, visited1, edgeID, mergerMap1);
+        if (!visited1[item->id] && !mergerMap[item->id]) {
+            toFuse = fuseDFS(item, visited1, edgeID);
+        }
+
+        if (mergerMap[item->id]) {
+            toFuse = fuseDFSMerger(item, visited1, edgeID);
+            toFuse.push_back(item);
         }
 
         if (toFuse.size() > 1) fusion.push_back(toFuse);
