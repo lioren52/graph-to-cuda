@@ -35,7 +35,7 @@ public:
 
     void fuseNodes(std::vector<Node*> nodes2Fuse);
 
-    std::vector<Node*> fuseDFS(Node* node, std::vector<int>& visited, std::unordered_map<std::pair<Node*, Node*>, int> edgeID)
+    std::vector<Node*> fuseDFS(Node* node, std::vector<int>& visited, std::unordered_map<std::pair<Node*, Node*>, int> edgeID);
 
     void fusionPass();
 
