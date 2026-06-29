@@ -11,6 +11,7 @@
 #include <graph.h>
 #include <node.h>
 #include <kernel.h>
+#include <pair>
 
 
 float* Graph::bufferAlloc(Node* node) {
@@ -140,7 +141,7 @@ std::vector<Node*> Graph::fuseDFS(Node* node, std::vector<int>& visited, std::un
     
     if (!visited[outMap[node][0]->id]) ans = fuseDFS(outMap[node][0]);
 
-    if ((edgeID[{node->input[0], node}] == edgeID[{node, outMap[node][0]}] || outMap.find(node->input[0]) == outMap.end())) {
+    if ((edgeID[{node->inputs[0], node}] == edgeID[{node, outMap[node][0]}] || outMap.find(node->inputs[0]) == outMap.end())) {
         ans.push_back(node);
     }
 
@@ -163,7 +164,7 @@ void Graph::fusionPass() {
         }
     }
     std::queue<std::pair<Node*, int>> que; 
-    std::vector<int> visited(stored.size(), 0);
+    std::vector<int> visited(sorted.size(), 0);
     std::unordered_map<std::pair<Node*, Node*>, int> edgeID;
     std::vector<int> mergerMap(stored.size(), 0);
 
