@@ -188,26 +188,24 @@ void Graph::fusionPass() {
     for (Node* item : sorted) {
         if (item->operation != Oper::INPUT && !visited[item->id]) {
             que.push({item, getRandomInt(1, 500)});
-            visited[item->id] = 1;
 
             while (!que.empty()) {
                 std::pair<Node*, int> current = que.front();
                 que.pop();
                 
                 if (!visited[current.first->id]) {
+                    visited[current.first] = 1;
                     if (!mergerMap[current.first->id]) {
-                        bool newBranchFlag = false;
                         int count = 0;
                         for (Node* in : current.first->inputs) {
-                            if (in->operation != Oper::INPUT && count <= 1) {
+                            if (in->operation != Oper::INPUT) {
                                 count++;
-                                newBranchFlag = true;
-                                break;
                             }
                         }
 
-                        if (newBranchFlag) {
+                        if (count > 1) {
                             que.push({current.first, getRandomInt(1, 500)});
+                            visited[current.first] = 0;
                             mergerMap[current.first->id] = 1;
                             continue;
                         }
@@ -217,7 +215,6 @@ void Graph::fusionPass() {
                     if (outMap[current.first].size() > 1) {
                         for (Node* out : outMap[current.first]) {
                             int ran = getRandomInt(1, 500);
-                            visited[out->id] = 1;
                             que.push({out, ran});
                             edgeID[{current.first, out}] = ran;
                         }
@@ -243,6 +240,7 @@ void Graph::fusionPass() {
         }
 
         if (mergerMap[item->id]) {
+            
             toFuse = fuseDFSMerger(item, visited1, edgeID);
             toFuse.push_back(item);
         }
