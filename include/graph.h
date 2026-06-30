@@ -45,5 +45,5 @@ public:
 
     void printNode(Node* item);
 
-    std::vector<Node*> topoSort(std::vector<Node*> newNodes)
+    std::vector<Node*> topoSort(std::vector<Node*> newNodes);
 };
