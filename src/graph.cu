@@ -120,7 +120,7 @@ void Graph::fuseNodes(std::vector<Node*> nodes2Fuse) {
     }
 }
 
-std::vector<Node*> Graph::fuseDFSMerger(Node* node, std::vector<int>& visited) {
+std::vector<Node*> Graph::fuseDFSMerger(Node* node, std::vector<int>& visited, bool matmul, bool add, bool relu) {
     if (outMap[node].size() > 1 || outMap[node].size() == 0) {
         return {node};
     }

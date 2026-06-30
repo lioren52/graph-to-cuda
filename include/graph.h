@@ -37,9 +37,9 @@ public:
 
     void fuseNodes(std::vector<Node*> nodes2Fuse);
 
-    std::vector<Node*> fuseDFSMerger(Node* node, std::vector<int>& visited);
+    std::vector<Node*> fuseDFSMerger(Node* node, std::vector<int>& visited, bool matmul, bool add, bool relu);
 
-    std::vector<Node*> fuseDFS(Node* node, std::vector<int>& visited);
+    std::vector<Node*> fuseDFS(Node* node, std::vector<int>& visited, bool matmul, bool add, bool relu);
 
     void fusionPass();
 
