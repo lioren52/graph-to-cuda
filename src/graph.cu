@@ -126,6 +126,8 @@ Node* Graph::fuseNodes(std::vector<Node*> nodes2Fuse, std::vector<int>& fusedMap
         if (it != item->inputs.end()) *it = fusedNode;
     }
 
+    fusedNode->shape = nodes2Fuse[nodes2Fuse.size()-1]->shape;
+
     for (Node* item : nodes2Fuse) {
         fusedMap[item->id] = 1;
     }
