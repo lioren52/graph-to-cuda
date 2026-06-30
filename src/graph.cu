@@ -128,19 +128,32 @@ std::vector<Node*> Graph::fuseDFSMerger(Node* node, std::vector<int>& visited) {
     visited[node->id] = 1;
     std::vector<Node*> ans;
     
-    if (!visited[outMap[node][0]->id]) ans = fuseDFS(outMap[node][0], visited);
+    if (!visited[outMap[node][0]->id]) {
+        if (!matmul && node->operation == Oper::MATMUL) {
+            ans = fuseDFS(outMap[node][0], visited, 1, add, relu);
+        } else if (!add && node->operation == Oper::ADD) {
+            ans = fuseDFS(outMap[node][0], visited, matmul, 1, relu);
+        } else if (!relu && node->operation == Oper::ReLU) {
+            ans = fuseDFS(outMap[node][0], visited, matmul, add, 1);
+        }
+    }
+
 
     ans.push_back(node);
 
     return ans;
 } 
 
-std::vector<Node*> Graph::fuseDFS(Node* node, std::vector<int>& visited) {
+std::vector<Node*> Graph::fuseDFS(Node* node, std::vector<int>& visited, bool matmul, bool add, bool relu) {
     int count = 0;
     for (Node* item : node->inputs) {
         if (item->operation != Oper::INPUT) {
             count++;
         }
+    }
+
+    if (relu) {
+        return {};
     }
 
     if (count > 1) {
@@ -154,7 +167,15 @@ std::vector<Node*> Graph::fuseDFS(Node* node, std::vector<int>& visited) {
     visited[node->id] = 1;
     std::vector<Node*> ans;
     
-    if (!visited[outMap[node][0]->id]) ans = fuseDFS(outMap[node][0], visited);
+    if (!visited[outMap[node][0]->id]) {
+        if (!matmul && node->operation == Oper::MATMUL) {
+            ans = fuseDFS(outMap[node][0], visited, 1, add, relu);
+        } else if (!add && node->operation == Oper::ADD) {
+            ans = fuseDFS(outMap[node][0], visited, matmul, 1, relu);
+        } else if (!relu && node->operation == Oper::ReLU) {
+            ans = fuseDFS(outMap[node][0], visited, matmul, add, 1);
+        }
+    }
 
     ans.push_back(node);
 
