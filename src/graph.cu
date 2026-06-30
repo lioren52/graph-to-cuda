@@ -208,7 +208,6 @@ void Graph::fusionPass() {
         if (mergerMap[item->id]) {
             
             toFuse = fuseDFSMerger(item, visited);
-            toFuse.push_back(item);
         }
 
         if (toFuse.size() > 1) fusion.push_back(toFuse);
