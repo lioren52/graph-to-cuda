@@ -35,7 +35,7 @@ public:
 
     std::vector<Node*> topoSort();
 
-    Node*fuseNodes(std::vector<Node*> nodes2Fuse, std::vector<int>& fusedMap);
+    Node* fuseNodes(std::vector<Node*> nodes2Fuse, std::vector<int>& fusedMap);
 
     std::vector<Node*> fuseDFSMerger(Node* node, std::vector<int>& visited, bool matmul, bool add, bool relu);
 

@@ -11,6 +11,7 @@
 #include <graph.h>
 #include <node.h>
 #include <kernel.h>
+#include <unordered_set>
 #include <utility>
 #include <map>
 
@@ -94,7 +95,13 @@ void Graph::execute() {
 }
 
 Node* Graph::fuseNodes(std::vector<Node*> nodes2Fuse, std::vector<int>& fusedMap) {
-    std::vector<Node*> inputting = nodes2Fuse[0]->inputs;
+    std::unordered_set<Node*> nodies(nodes2Fuse.begin(), nodes2Fuse.end());
+    std::vector<Node*> inputting;
+    for (Node* item : nodes2Fuse) {
+        for (Node* val : item->inputs) {
+              if (nodies.find(val) == nodies.end()) inputting.push_back(val);
+        }
+    }
     std::string identifier = "";
     for (Node* item : nodes2Fuse) {
         if (item->operation == Oper::MATMUL) identifier += "M";
@@ -205,7 +212,7 @@ std::vector<Node*> Graph::fusionPass() {
     }
     std::vector<int> visited(sorted.size(), 0);
     std::vector<int> mergerMap(sorted.size(), 0);
-    std::vector<std::pair<int, int>> fuseableMap(sorted.size(), std::pair<int>(0, 0));
+    std::vector<std::pair<int, int>> fuseableMap(sorted.size(), std::pair<int, int>(0, 0));
 
     for (Node* item : sorted) {
         if (item->operation == Oper::INPUT) continue;
@@ -248,13 +255,15 @@ std::vector<Node*> Graph::fusionPass() {
             fusion.push_back(toFuse);
         }
     }
-    std::vector<Node*> fusedMap(sorted.size(), 0);
+    std::vector<int> fusedMap(sorted.size(), 0);
     std::vector<Node*> fusedSorted;
 
     for (Node* item : sorted) {
-        if (fusableMap[item->id].first && !fusedMap[item->id]) {
-            Node* newFusedNode = fuseNodes(fusion[fusableMap[item->id].second], fusedMap);
-            fusedSorted.push_back(newFusedNode);
+        if (fuseableMap[item->id].first) {
+            if (!fusedMap[item->id]) {
+                Node* newFusedNode = fuseNodes(fusion[fuseableMap[item->id].second], fusedMap);
+                fusedSorted.push_back(newFusedNode);
+            }
         } else {
             fusedSorted.push_back(item);
         }
@@ -471,6 +480,8 @@ std::vector<Node*> Graph::topoSort(std::vector<Node*> newNodes) {
     }
 
     if (topo.size() != nodesNum) {
+      std::cout << "Topological Sort size: " << topo.size() << std::endl;
+        std::cout << "newNodes size: " << nodesNum << std::endl;
         std::cout << "Error: cycle detected in graph, topological sort incomplete\n";
         return {};
     }
