@@ -41,7 +41,7 @@ public:
 
     std::vector<Node*> fuseDFS(Node* node, std::vector<int>& visited, bool matmul, bool add, bool relu);
 
-    std::vector<Node*> Graph::fusionPass();
+    std::vector<Node*> fusionPass();
 
     void printNode(Node* item);
 
