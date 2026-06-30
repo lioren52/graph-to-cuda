@@ -393,7 +393,7 @@ void Graph::printNode(Node* item) {
     if (!item->inputs.empty()) {
         std::cout << "Input Nodes: ";
         for (Node* node : item->inputs) {
-            std::cout << node->name << " ";
+            std::cout << node->name << "(id: " << node->id << ")" << " ";
         }
         std::cout << "\n";
     }
