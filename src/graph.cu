@@ -120,7 +120,7 @@ void Graph::fuseNodes(std::vector<Node*> nodes2Fuse) {
     }
 }
 
-std::vector<Node*> Graph::fuseDFSMerger(Node* node, std::vector<int>& visited, std::map<std::pair<Node*, Node*>, int>& edgeID) {
+std::vector<Node*> Graph::fuseDFSMerger(Node* node, std::vector<int>& visited) {
     if (outMap[node].size() > 1 || outMap[node].size() == 0) {
         return {node};
     }
@@ -137,7 +137,7 @@ std::vector<Node*> Graph::fuseDFSMerger(Node* node, std::vector<int>& visited, s
     return ans;
 } 
 
-std::vector<Node*> Graph::fuseDFS(Node* node, std::vector<int>& visited, std::map<std::pair<Node*, Node*>, int>& edgeID) {
+std::vector<Node*> Graph::fuseDFS(Node* node, std::vector<int>& visited) {
     int count = 0;
     for (Node* item : node->inputs) {
         if (item->operation != Oper::INPUT) {
@@ -180,68 +180,38 @@ void Graph::fusionPass() {
             }
         }
     }
-    std::queue<std::pair<Node*, int>> que; 
     std::vector<int> visited(sorted.size(), 0);
-    std::map<std::pair<Node*, Node*>, int> edgeID;
     std::vector<int> mergerMap(sorted.size(), 0);
 
     for (Node* item : sorted) {
-        if (item->operation != Oper::INPUT && !visited[item->id]) {
-            que.push({item, getRandomInt(1, 500)});
+        if (item->operation == Oper::INPUT) continue;
 
-            while (!que.empty()) {
-                std::pair<Node*, int> current = que.front();
-                que.pop();
-                
-                if (!visited[current.first->id]) {
-                    visited[current.first] = 1;
-                    if (!mergerMap[current.first->id]) {
-                        int count = 0;
-                        for (Node* in : current.first->inputs) {
-                            if (in->operation != Oper::INPUT) {
-                                count++;
-                            }
-                        }
+        int count = 0;
+        if (item->inputs.size() > 1) {
+          for (Node* val : item->inputs) {
+            if (val->operation == Oper::INPUT) continue;
 
-                        if (count > 1) {
-                            que.push({current.first, getRandomInt(1, 500)});
-                            visited[current.first] = 0;
-                            mergerMap[current.first->id] = 1;
-                            continue;
-                        }
-                    }
-
-
-                    if (outMap[current.first].size() > 1) {
-                        for (Node* out : outMap[current.first]) {
-                            int ran = getRandomInt(1, 500);
-                            que.push({out, ran});
-                            edgeID[{current.first, out}] = ran;
-                        }
-                    } else if (outMap[current.first].size() == 0) {
-                        continue;
-                    } else {
-                        que.push({outMap[current.first][0], current.second});
-                        edgeID[{current.first, outMap[current.first][0]}] = current.second;
-                    }
-                }
-            }
+            count++;
+          }
         }
+
+        if (count > 1) {
+          mergerMap[item->id] = 1;
+        } 
     }
-    
-    std::vector<int> visited1(sorted.size(), 0);
+
     for (Node* item : sorted) {
         if (item->operation == Oper::INPUT) continue;
 
         std::vector<Node*> toFuse;
 
         if (!visited1[item->id] && !mergerMap[item->id]) {
-            toFuse = fuseDFS(item, visited1, edgeID);
+            toFuse = fuseDFS(item, visited);
         }
 
         if (mergerMap[item->id]) {
             
-            toFuse = fuseDFSMerger(item, visited1, edgeID);
+            toFuse = fuseDFSMerger(item, visited);
             toFuse.push_back(item);
         }
 

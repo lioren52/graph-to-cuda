@@ -37,9 +37,9 @@ public:
 
     void fuseNodes(std::vector<Node*> nodes2Fuse);
 
-    std::vector<Node*> fuseDFSMerger(Node* node, std::vector<int>& visited, std::map<std::pair<Node*, Node*>, int>& edgeID);
+    std::vector<Node*> fuseDFSMerger(Node* node, std::vector<int>& visited);
 
-    std::vector<Node*> fuseDFS(Node* node, std::vector<int>& visited, std::map<std::pair<Node*, Node*>, int>& edgeID);
+    std::vector<Node*> fuseDFS(Node* node, std::vector<int>& visited);
 
     void fusionPass();
 
