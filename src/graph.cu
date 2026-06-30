@@ -201,7 +201,7 @@ void Graph::fusionPass() {
 
         std::vector<Node*> toFuse;
 
-        if (!visited1[item->id] && !mergerMap[item->id]) {
+        if (!visited[item->id] && !mergerMap[item->id]) {
             toFuse = fuseDFS(item, visited);
         }
 
