@@ -128,11 +128,9 @@ std::vector<Node*> Graph::fuseDFSMerger(Node* node, std::vector<int>& visited) {
     visited[node->id] = 1;
     std::vector<Node*> ans;
     
-    if (!visited[outMap[node][0]->id]) ans = fuseDFS(outMap[node][0], visited, edgeID);
+    if (!visited[outMap[node][0]->id]) ans = fuseDFS(outMap[node][0], visited);
 
-    if ((edgeID[{node->inputs[0], node}] == edgeID[{node, outMap[node][0]}] || outMap.find(node->inputs[0]) == outMap.end())) {
-        ans.push_back(node);
-    }
+    ans.push_back(node);
 
     return ans;
 } 
@@ -156,11 +154,9 @@ std::vector<Node*> Graph::fuseDFS(Node* node, std::vector<int>& visited) {
     visited[node->id] = 1;
     std::vector<Node*> ans;
     
-    if (!visited[outMap[node][0]->id]) ans = fuseDFS(outMap[node][0], visited, edgeID);
+    if (!visited[outMap[node][0]->id]) ans = fuseDFS(outMap[node][0], visited);
 
-    if ((edgeID[{node->inputs[0], node}] == edgeID[{node, outMap[node][0]}] || outMap.find(node->inputs[0]) == outMap.end())) {
-        ans.push_back(node);
-    }
+    ans.push_back(node);
 
     return ans;
 } 
