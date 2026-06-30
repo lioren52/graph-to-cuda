@@ -16,6 +16,10 @@ std::string op2String(Oper op) {
         case Oper::MATMUL : return "MATMUL";
         case Oper::ADD : return "ADD";
         case Oper::ReLU : return "ReLU";
+        case Oper::FUSED_MR : return "Fused Node (MatMul + ReLU)";
+        case Oper::FUSED_AR : return "Fused Node (Add + ReLU)";
+        case Oper::FUSED_MAR : return "Fused Node (MatMul + Add + ReLU)";
+        case Oper::FUSED_MA : return "Fused Node (MatMul + Add)";
         default: return "Undefined";
     }
 }
