@@ -93,7 +93,7 @@ void Graph::execute() {
     writeVectorToFile(output.data(), output.size(), node->name);
 }
 
-void Graph::fuseNodes(std::vector<Node*> nodes2Fuse) {
+Node* Graph::fuseNodes(std::vector<Node*> nodes2Fuse, std::vector<int>& fusedMap) {
     std::vector<Node*> inputting = nodes2Fuse[0]->inputs;
     std::string identifier = "";
     for (Node* item : nodes2Fuse) {
@@ -111,13 +111,19 @@ void Graph::fuseNodes(std::vector<Node*> nodes2Fuse) {
 
     if (!fusedNode) {
         std::cout << "Error: unknown fusion pattern: " << identifier << "\n";
-        return;
+        return nullptr;
     }
 
     for (Node* item : outMap[nodes2Fuse[nodes2Fuse.size()-1]]) {
         auto it = std::find(item->inputs.begin(), item->inputs.end(), nodes2Fuse.back());
         if (it != item->inputs.end()) *it = fusedNode;
     }
+
+    for (Node* item : nodes2Fuse) {
+        fusedMap[item->id] = 1;
+    }
+
+    return fusedNode;
 }
 
 std::vector<Node*> Graph::fuseDFSMerger(Node* node, std::vector<int>& visited, bool matmul, bool add, bool relu) {
@@ -180,9 +186,9 @@ std::vector<Node*> Graph::fuseDFS(Node* node, std::vector<int>& visited, bool ma
     ans.push_back(node);
 
     return ans;
-} 
+}
 
-void Graph::fusionPass() {
+std::vector<Node*> Graph::fusionPass() {
     outMap.clear();
     std::vector<std::vector<Node*>> fusion;
 
@@ -199,6 +205,7 @@ void Graph::fusionPass() {
     }
     std::vector<int> visited(sorted.size(), 0);
     std::vector<int> mergerMap(sorted.size(), 0);
+    std::vector<std::pair<int, int>> fuseableMap(sorted.size(), std::pair<int>(0, 0));
 
     for (Node* item : sorted) {
         if (item->operation == Oper::INPUT) continue;
@@ -217,6 +224,7 @@ void Graph::fusionPass() {
         } 
     }
 
+    int counter = -1;
     for (Node* item : sorted) {
         if (item->operation == Oper::INPUT) continue;
 
@@ -231,19 +239,39 @@ void Graph::fusionPass() {
             toFuse = fuseDFSMerger(item, visited, 0, 0, 0);
         }
 
-        if (toFuse.size() > 1) fusion.push_back(toFuse);
-    }
-
-    for (std::vector<Node*> toFuse : fusion) {
-        std::cout << "----------List----------" << std::endl;
-        for (Node* item : toFuse) {
-            printNode(item);
-            std::cout << std::endl;
+        if (toFuse.size() > 1) {
+            reverse(toFuse.begin(), toFuse.end());
+            counter = fusion.size();
+            for (Node* val : toFuse) {
+                fuseableMap[val->id] = {1, counter};
+            }
+            fusion.push_back(toFuse);
         }
-
-        std::cout << std::endl;
-        std::cout << std::endl;
     }
+    std::vector<Node*> fusedMap(sorted.size(), 0);
+    std::vector<Node*> fusedSorted;
+
+    for (Node* item : sorted) {
+        if (fusableMap[item->id].first && !fusedMap[item->id]) {
+            Node* newFusedNode = fuseNodes(fusion[fusableMap[item->id].second], fusedMap);
+            fusedSorted.push_back(newFusedNode);
+        } else {
+            fusedSorted.push_back(item);
+        }
+    }
+
+    return fusedSorted;
+
+    // for (std::vector<Node*> toFuse : fusion) {
+    //     std::cout << "----------List----------" << std::endl;
+    //     for (Node* item : toFuse) {
+    //         printNode(item);
+    //         std::cout << std::endl;
+    //     }
+
+    //     std::cout << std::endl;
+    //     std::cout << std::endl;
+    // }
 }
 
 
@@ -402,6 +430,49 @@ std::vector<Node*> Graph::topoSort() {
 
     for (Node* item : topo) {
         sorted.push_back(item);
+    }
+
+    return topo;
+}
+
+std::vector<Node*> Graph::topoSort(std::vector<Node*> newNodes) {
+    int nodesNum = newNodes.size();
+    std::vector<int> indegree(nodesNum);
+    std::unordered_map<int, std::vector<Node*>> adjList;
+
+    for (int i = 0; i < nodesNum; i++) {
+        Node* node = newNodes[i];
+        indegree[i] = node->inputs.size();
+        for (Node* item : node->inputs) {
+            adjList[item->id].push_back(node);
+        }
+    }
+
+    std::queue<Node*> que;
+    for (int i = 0; i < nodesNum; i++) {
+        if (indegree[i] == 0) {
+            Node* node = newNodes[i];
+            que.push(node);
+        }
+    }
+
+    std::vector<Node*> topo;
+    while (!que.empty()) {
+        Node* node = que.front();
+        que.pop();
+        topo.push_back(node);
+
+        for (Node* item : adjList[node->id]) {
+            indegree[item->id]--;
+            if (indegree[item->id] == 0) {
+                que.push(item);
+            }
+        }
+    }
+
+    if (topo.size() != nodesNum) {
+        std::cout << "Error: cycle detected in graph, topological sort incomplete\n";
+        return {};
     }
 
     return topo;

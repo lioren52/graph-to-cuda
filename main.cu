@@ -49,8 +49,15 @@ int main() {
     std::cout << std::endl;
     std::cout << std::endl;
     std::cout << "------------Fusion Pass------------" << std::endl;
-    graph.fusionPass();
-
+    std::vector<Node*> fusionList = graph.fusionPass();
+    std::cout << std::endl;
+    std::cout << std::endl;
+    std::vector<Node*> newTopo = graph.topoSort(fusionList);
+    std::cout << "----------------------Topo After Fusion Sort----------------------" << std::endl;
+    for (Node* item : newTopo) {
+        graph.printNode(item);
+        std::cout << std::endl;
+    }
 
 
     return 0;

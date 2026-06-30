@@ -35,13 +35,15 @@ public:
 
     std::vector<Node*> topoSort();
 
-    void fuseNodes(std::vector<Node*> nodes2Fuse);
+    Node*fuseNodes(std::vector<Node*> nodes2Fuse, std::vector<int>& fusedMap);
 
     std::vector<Node*> fuseDFSMerger(Node* node, std::vector<int>& visited, bool matmul, bool add, bool relu);
 
     std::vector<Node*> fuseDFS(Node* node, std::vector<int>& visited, bool matmul, bool add, bool relu);
 
-    void fusionPass();
+    std::vector<Node*> Graph::fusionPass();
 
     void printNode(Node* item);
+
+    std::vector<Node*> topoSort(std::vector<Node*> newNodes)
 };
