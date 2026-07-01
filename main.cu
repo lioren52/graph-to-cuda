@@ -73,14 +73,18 @@ int main() {
     std::vector<Node*> fusionList = graph.fusionPass();
     std::cout << std::endl;
     std::cout << std::endl;
+    std::cout << "Total Nodes Before Fusion: " << topoS.size() << std::endl;
     std::cout << "Total Nodes After Fusion: " << fusionList.size() << std::endl;
     std::cout << std::endl;
     std::cout << std::endl;
-    std::cout << "----------------------Topo After Fusion Sort----------------------" << std::endl;
-    for (Node* item : fusionList) {
-        graph.printNode(item);
-        std::cout << std::endl;
-    }
+    std::cout << "Running Input layers generation" << std::endl;
+    graph.generator();
+
+    std::cout << "Executing UNfused Graph" << std::endl;
+    graph.execute();
+
+    std::cout << "Executing FUSED Graph" << std::endl;
+    graph.execute(fusionList);
 
 
     return 0;

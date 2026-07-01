@@ -24,6 +24,8 @@ public:
 
     void execute();
 
+    void execute(std::vector<Node*> fusedGraphs);
+
     void setOutput(Node* node);
 
     Node* getOutput();
