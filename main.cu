@@ -66,6 +66,13 @@ int main() {
         graph.printNode(item);
         std::cout << std::endl;
     }
+    std::cout << std::endl;
+    std::cout << std::endl;
+    std::cout << "Running Input layers generation" << std::endl;
+    graph.generator();
+
+    std::cout << "Executing UNfused Graph" << std::endl;
+    graph.execute();
 
     std::cout << std::endl;
     std::cout << std::endl;
@@ -77,11 +84,6 @@ int main() {
     std::cout << "Total Nodes After Fusion: " << fusionList.size() << std::endl;
     std::cout << std::endl;
     std::cout << std::endl;
-    std::cout << "Running Input layers generation" << std::endl;
-    graph.generator();
-
-    std::cout << "Executing UNfused Graph" << std::endl;
-    graph.execute();
 
     std::cout << "Executing FUSED Graph" << std::endl;
     graph.execute(fusionList);

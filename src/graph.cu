@@ -46,7 +46,7 @@ void Graph::generator() {
 }
 
 void Graph::execute() {
-    if (nodeMem.size() < nodes.size()) {
+    if (nodeMemMap.size() < nodes.size()) {
         nodeMemMap = nodeMem();
     }
     int inputTill = 0;
@@ -97,15 +97,15 @@ void Graph::execute() {
 }
 
 void Graph::execute(std::vector<Node*> fusedGraphs) {
-    if (nodeMem.size() < nodes.size()) {
-        nodeMemMap = nodeMem();
-    }
+    nodeMemMap.clear();
+    nodeMemMap = nodeMem();
+    
     int inputTill = 0;
 
     for (int i = 0; i < fusedGraphs.size(); i++) {
         if (fusedGraphs[i]->operation == Oper::INPUT) {
             size_t byteSize = fusedGraphs[i]->shape[0] * fusedGraphs[i]->shape[1] * sizeof(float);
-            std::vector<float> cont = readFloatsFromFile(sorted[i]->name+".bin", byteSize);
+            std::vector<float> cont = readFloatsFromFile(fusedGraphs[i]->name+".bin", byteSize);
 
             cudaMemcpy(nodeMemMap[fusedGraphs[i]->id], cont.data(), byteSize, cudaMemcpyHostToDevice);
             std::cout << "Inputing from " << fusedGraphs[i]->name << std::endl;
