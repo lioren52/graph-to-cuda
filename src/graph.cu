@@ -46,7 +46,9 @@ void Graph::generator() {
 }
 
 void Graph::execute() {
-    std::unordered_map<int, float*> nodeMemMap = nodeMem();
+    if (nodeMem.size() < nodes.size()) {
+        nodeMemMap = nodeMem();
+    }
     int inputTill = 0;
 
     for (int i = 0; i < sorted.size(); i++) {
@@ -92,6 +94,105 @@ void Graph::execute() {
     std::cout << "Final Node: " << node->name << std::endl;
     cudaMemcpy(output.data(), nodeMemMap[node->id], node->shape[0] * node->shape[1] * sizeof(float), cudaMemcpyDeviceToHost);
     writeVectorToFile(output.data(), output.size(), node->name);
+}
+
+void Graph::execute(std::vector<Node*> fusedGraphs) {
+    if (nodeMem.size() < nodes.size()) {
+        nodeMemMap = nodeMem();
+    }
+    int inputTill = 0;
+
+    for (int i = 0; i < fusedGraphs.size(); i++) {
+        if (fusedGraphs[i]->operation == Oper::INPUT) {
+            size_t byteSize = fusedGraphs[i]->shape[0] * fusedGraphs[i]->shape[1] * sizeof(float);
+            std::vector<float> cont = readFloatsFromFile(sorted[i]->name+".bin", byteSize);
+
+            cudaMemcpy(nodeMemMap[fusedGraphs[i]->id], cont.data(), byteSize, cudaMemcpyHostToDevice);
+            std::cout << "Inputing from " << fusedGraphs[i]->name << std::endl;
+        } else {
+            inputTill = i;
+            break;
+        }
+    }
+
+    for (int i = inputTill; i < fusedGraphs.size(); i++) {
+        if (fusedGraphs[i]->operation == Oper::MATMUL) {
+            int row_A = fusedGraphs[i]->inputs[0]->shape[0];
+            int N     = fusedGraphs[i]->inputs[0]->shape[1];
+            int col_B = fusedGraphs[i]->inputs[1]->shape[1];
+
+            matMul(nodeMemMap[fusedGraphs[i]->inputs[0]->id], nodeMemMap[fusedGraphs[i]->inputs[1]->id], nodeMemMap[fusedGraphs[i]->id], row_A, N, col_B);
+
+        } else if (fusedGraphs[i]->operation == Oper::ADD) {
+            int height = fusedGraphs[i]->shape[0];
+            int width  = fusedGraphs[i]->shape[1];
+            
+            matAdd(nodeMemMap[fusedGraphs[i]->inputs[0]->id], nodeMemMap[fusedGraphs[i]->inputs[1]->id], nodeMemMap[fusedGraphs[i]->id], height, width);
+            
+        } else if (fusedGraphs[i]->operation == Oper::ReLU) {
+            int height = fusedGraphs[i]->shape[0];
+            int width  = fusedGraphs[i]->shape[1];
+            
+            matReLU(nodeMemMap[fusedGraphs[i]->inputs[0]->id], nodeMemMap[fusedGraphs[i]->id], height, width);
+            
+        } else if (fusedGraphs[i]->operation == Oper::FUSED_MR) {
+            int row_A = fusedGraphs[i]->inputs[0]->shape[0];
+            int N     = fusedGraphs[i]->inputs[0]->shape[1];
+            int col_B = fusedGraphs[i]->inputs[1]->shape[1];
+
+            float* A = nodeMemMap[fusedGraphs[i]->inputs[0]->id];
+            float* B = nodeMemMap[fusedGraphs[i]->inputs[1]->id];
+            float* C = nodeMemMap[fusedGraphs[i]->id];
+
+            matMulReLU(A, B, C, row_A, N, col_B);
+
+        } else if (fusedGraphs[i]->operation == Oper::FUSED_AR) {
+            int height = fusedGraphs[i]->shape[0];
+            int width  = fusedGraphs[i]->shape[1];
+
+            float* A = nodeMemMap[fusedGraphs[i]->inputs[0]->id];
+            // Bias is guaranteed to be the last input node
+            float* Bias = nodeMemMap[fusedGraphs[i]->inputs.back()->id]; 
+            float* C = nodeMemMap[fusedGraphs[i]->id];
+
+            matAddReLU(A, Bias, C, height, width);
+
+        } else if (fusedGraphs[i]->operation == Oper::FUSED_MAR) {
+            int row_A = fusedGraphs[i]->inputs[0]->shape[0];
+            int N     = fusedGraphs[i]->inputs[0]->shape[1];
+            int col_B = fusedGraphs[i]->inputs[1]->shape[1];
+
+            float* A = nodeMemMap[fusedGraphs[i]->inputs[0]->id];
+            float* B = nodeMemMap[fusedGraphs[i]->inputs[1]->id];
+            // Bias is guaranteed to be the last input node
+            float* Bias = nodeMemMap[fusedGraphs[i]->inputs.back()->id]; 
+            float* C = nodeMemMap[fusedGraphs[i]->id];
+
+            matMulAddReLU(A, B, Bias, C, row_A, N, col_B);
+
+        } else if (fusedGraphs[i]->operation == Oper::FUSED_MA) {
+            int row_A = fusedGraphs[i]->inputs[0]->shape[0];
+            int N     = fusedGraphs[i]->inputs[0]->shape[1];
+            int col_B = fusedGraphs[i]->inputs[1]->shape[1];
+
+            float* A = nodeMemMap[fusedGraphs[i]->inputs[0]->id];
+            float* B = nodeMemMap[fusedGraphs[i]->inputs[1]->id];
+            // Bias is guaranteed to be the last input node
+            float* Bias = nodeMemMap[fusedGraphs[i]->inputs.back()->id];
+            float* C = nodeMemMap[fusedGraphs[i]->id];
+
+            matMulAdd(A, B, Bias, C, row_A, N, col_B);
+        }
+
+        std::cout << "At " << fusedGraphs[i]->name << std::endl;
+    }
+
+    Node* node = fusedGraphs[fusedGraphs.size()-1];
+    std::vector<float> output(node->shape[0] * node->shape[1]);
+    std::cout << std::endl;
+    std::cout << "Final Node: " << node->name << std::endl;
+    cudaMemcpy(output.data(), nodeMemMap[node->id], node->shape[0] * node->shape[1] * sizeof(float), cudaMemcpyDeviceToHost);
+    writeVectorToFile(output.data(), output.size(), node->name+"_fusedGraph");
 }
 
 Node* Graph::fuseNodes(std::vector<Node*> nodes2Fuse, std::vector<int>& fusedMap) {

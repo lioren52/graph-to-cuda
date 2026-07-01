@@ -14,6 +14,7 @@ class Graph {
     Node* outputNode;
     std::vector<Node*> sorted;
     std::unordered_map<Node*, std::vector<Node*>> outMap;
+    std::unordered_map<int, float*> nodeMemMap;
 public: 
     float* bufferAlloc(Node* node);
 
